@@ -1,0 +1,955 @@
+{
+	"info": {
+		"_postman_id": "fc195678-3214-4590-8c53-c987e5a7f9c2",
+		"name": "Автосалон API",
+		"description": "Тесты API информационной системы продажи автомобилей",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Авторизация и пользователи",
+			"item": [
+				{
+					"name": "Регистрация пользователя",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set('timestamp', new Date().getTime());"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит токен и данные пользователя\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.token).to.be.a('string');",
+									"    pm.expect(response.user).to.have.property('username');",
+									"    pm.expect(response.user).to.have.property('email');",
+									"    pm.expect(response.user).to.have.property('isAdmin');",
+									"    pm.expect(response.user.isAdmin).to.equal(false);",
+									"    ",
+									"    // Сохраняем токен нового пользователя",
+									"    pm.environment.set('token', response.token);",
+									"    pm.environment.set('username', response.user.username);",
+									"    pm.environment.set('isAdmin', response.user.isAdmin);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"test_user_{{$timestamp}}\",\n    \"password\": \"test_password\",\n    \"email\": \"test_{{$timestamp}}@example.com\",\n    \"fullName\": \"Тестовый Пользователь\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Регистрация нового пользователя"
+					},
+					"response": []
+				},
+				{
+					"name": "Авторизация пользователя",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит токен и данные пользователя\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.token).to.be.a('string');",
+									"    pm.expect(response.user).to.have.property('username');",
+									"",
+									"    // Сохраняем токен для последующих запросов",
+									"    pm.environment.set('token', response.token);",
+									"    pm.environment.set('username', response.user.username);",
+									"    pm.environment.set('isAdmin', response.user.isAdmin);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"test_password\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Авторизация существующего пользователя"
+					},
+					"response": []
+				},
+				{
+					"name": "Авторизация администратора",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит токен админа\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.token).to.be.a('string');",
+									"    pm.expect(response.user.isAdmin).to.be.true;",
+									"",
+									"    // Сохраняем токен админа",
+									"    pm.environment.set('admin_token', response.token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Авторизация администратора"
+					},
+					"response": []
+				},
+				{
+					"name": "Проверка токена",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Токен действителен\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.status).to.equal(\"authorized\");",
+									"    pm.expect(response.username).to.equal(pm.environment.get('username'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/auth/check",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"check"
+							]
+						},
+						"description": "Проверка токена пользователя"
+					},
+					"response": []
+				}
+			],
+			"description": "Тесты API для авторизации и работы с пользователями"
+		},
+		{
+			"name": "Автомобили",
+			"item": [
+				{
+					"name": "Список всех автомобилей",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит список автомобилей\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    ",
+									"    if (response.length > 0) {",
+									"        const car = response[0];",
+									"        pm.expect(car).to.have.property('id');",
+									"        pm.expect(car).to.have.property('brand');",
+									"        pm.expect(car).to.have.property('model');",
+									"        pm.expect(car).to.have.property('year');",
+									"        pm.expect(car).to.have.property('price');",
+									"",
+									"        // Сохраняем ID первого автомобиля для следующих тестов",
+									"        pm.environment.set('car_id', car.id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/cars",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cars"
+							]
+						},
+						"description": "Получение списка всех автомобилей"
+					},
+					"response": []
+				},
+				{
+					"name": "Информация об автомобиле",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит информацию об автомобиле\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('brand');",
+									"    pm.expect(response).to.have.property('model');",
+									"    pm.expect(response).to.have.property('year');",
+									"    pm.expect(response).to.have.property('price');",
+									"    pm.expect(response).to.have.property('transmission');",
+									"    pm.expect(response).to.have.property('condition');",
+									"    pm.expect(response.id).to.equal(parseInt(pm.environment.get('car_id')));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/cars/{{car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cars",
+								"{{car_id}}"
+							]
+						},
+						"description": "Получение информации о конкретном автомобиле по ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Список новых автомобилей",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит только новые автомобили\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    ",
+									"    // Проверяем, что все автомобили имеют condition: 'new'",
+									"    response.forEach(function(car) {",
+									"        pm.expect(car.condition).to.equal('new');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/cars/new",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cars",
+								"new"
+							]
+						},
+						"description": "Получение списка только новых автомобилей"
+					},
+					"response": []
+				},
+				{
+					"name": "Список автомобилей с малым пробегом",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит только автомобили с малым пробегом\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    ",
+									"    // Проверяем, что все автомобили имеют пробег менее 30000 км",
+									"    response.forEach(function(car) {",
+									"        pm.expect(car.condition).to.equal('used');",
+									"        pm.expect(car.mileage).to.be.at.most(30000);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/cars/low-mileage",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cars",
+								"low-mileage"
+							]
+						},
+						"description": "Получение списка автомобилей с пробегом менее 30000 км"
+					},
+					"response": []
+				}
+			],
+			"description": "Тесты API для работы с автомобилями"
+		},
+		{
+			"name": "Избранное",
+			"item": [
+				{
+					"name": "Добавить в избранное",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Автомобиль добавлен в избранное\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.equal(\"Автомобиль добавлен в избранное\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/user/favorites/{{car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"user",
+								"favorites",
+								"{{car_id}}"
+							]
+						},
+						"description": "Добавление автомобиля в избранное"
+					},
+					"response": []
+				},
+				{
+					"name": "Проверка избранного",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Автомобиль в избранном\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.isFavorite).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/user/favorites/{{car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"user",
+								"favorites",
+								"{{car_id}}"
+							]
+						},
+						"description": "Проверка, находится ли автомобиль в избранном"
+					},
+					"response": []
+				},
+				{
+					"name": "Список избранного",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит список избранных автомобилей\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    ",
+									"    // Проверяем, что в списке есть наш добавленный автомобиль",
+									"    const hasCar = response.some(car => car.id === parseInt(pm.environment.get('car_id')));",
+									"    pm.expect(hasCar).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/user/favorites",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"user",
+								"favorites"
+							]
+						},
+						"description": "Получение списка избранных автомобилей пользователя"
+					},
+					"response": []
+				},
+				{
+					"name": "Удалить из избранного",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Автомобиль удален из избранного\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.equal(\"Автомобиль удален из избранного\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/user/favorites/{{car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"user",
+								"favorites",
+								"{{car_id}}"
+							]
+						},
+						"description": "Удаление автомобиля из избранного"
+					},
+					"response": []
+				}
+			],
+			"description": "Тесты API для работы с избранным"
+		},
+		{
+			"name": "Админские функции",
+			"item": [
+				{
+					"name": "Добавление автомобиля",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Новый автомобиль создан\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('brand');",
+									"    pm.expect(response).to.have.property('model');",
+									"    pm.expect(response.year).to.equal(2023);",
+									"    ",
+									"    // Сохраняем ID нового автомобиля",
+									"    pm.environment.set('new_car_id', response.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Получаем ID марки и модели для создания автомобиля",
+									"// Для тестов используем первый доступный бренд и модель",
+									"pm.sendRequest({",
+									"    url: 'http://localhost:8080/api/brands',",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (!err && res.json().length > 0) {",
+									"        const brand = res.json()[0];",
+									"        pm.environment.set('brand_id', brand.id);",
+									"        ",
+									"        // Получаем модели для этого бренда",
+									"        pm.sendRequest({",
+									"            url: `http://localhost:8080/api/brands/${brand.id}/models`,",
+									"            method: 'GET'",
+									"        }, function (err, res) {",
+									"            if (!err && res.json().length > 0) {",
+									"                pm.environment.set('model_id', res.json()[0].id);",
+									"            }",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Получаем ID магазина",
+									"pm.sendRequest({",
+									"    url: 'http://localhost:8080/api/shops',",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (!err && res.json().length > 0) {",
+									"        pm.environment.set('shop_id', res.json()[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"brandId\": {{brand_id}},\n    \"modelId\": {{model_id}},\n    \"year\": 2023,\n    \"enginePower\": 150,\n    \"transmission\": \"automatic\",\n    \"condition\": \"new\",\n    \"mileage\": 0,\n    \"color\": \"Черный\",\n    \"vin\": \"TESTVIN123456789\",\n    \"price\": 1500000,\n    \"shopId\": {{shop_id}},\n    \"inStock\": true\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/admin/cars",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"admin",
+								"cars"
+							]
+						},
+						"description": "Добавление нового автомобиля (только для администратора)"
+					},
+					"response": []
+				},
+				{
+					"name": "Редактирование автомобиля",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Автомобиль успешно обновлен\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response.price).to.equal(1600000);",
+									"    pm.expect(response.color).to.equal(\"Белый\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"brandId\": {{brand_id}},\n    \"modelId\": {{model_id}},\n    \"year\": 2023,\n    \"enginePower\": 150,\n    \"transmission\": \"automatic\",\n    \"condition\": \"new\",\n    \"mileage\": 0,\n    \"color\": \"Белый\",\n    \"vin\": \"TESTVIN123456789\",\n    \"price\": 1600000,\n    \"shopId\": {{shop_id}},\n    \"inStock\": true\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/admin/cars/{{new_car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"admin",
+								"cars",
+								"{{new_car_id}}"
+							]
+						},
+						"description": "Обновление информации об автомобиле (только для администратора)"
+					},
+					"response": []
+				},
+				{
+					"name": "Получение покупателей",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ содержит список покупателей\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    ",
+									"    if (response.length > 0) {",
+									"        const customer = response[0];",
+									"        pm.expect(customer).to.have.property('id');",
+									"        pm.expect(customer).to.have.property('fullName');",
+									"        pm.expect(customer).to.have.property('email');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/customers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"customers"
+							]
+						},
+						"description": "Получение списка всех покупателей"
+					},
+					"response": []
+				},
+				{
+					"name": "Удаление автомобиля",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Автомобиль успешно удален\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.equal(\"Автомобиль удален\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/admin/cars/{{new_car_id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"admin",
+								"cars",
+								"{{new_car_id}}"
+							]
+						},
+						"description": "Удаление автомобиля (только для администратора)"
+					},
+					"response": []
+				}
+			],
+			"description": "Тесты API для административных функций"
+		},
+		{
+			"name": "Калькулятор",
+			"item": [
+				{
+					"name": "Расчет стоимости импорта",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус код 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Расчет выполнен корректно\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('customsFee');",
+									"    pm.expect(response).to.have.property('exciseTax');",
+									"    pm.expect(response).to.have.property('vat');",
+									"    pm.expect(response).to.have.property('totalCost');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"basePrice\": 20000,\n    \"year\": 2020,\n    \"engineVolume\": 2.0,\n    \"enginePower\": 150,\n    \"isElectric\": false,\n    \"exchangeRate\": 90\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/calculator/import",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"calculator",
+								"import"
+							]
+						},
+						"description": "Расчет стоимости импорта автомобиля"
+					},
+					"response": []
+				}
+			],
+			"description": "Тесты API для калькуляторов"
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api"
+		}
+	]
+} 
