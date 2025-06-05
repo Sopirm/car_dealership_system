@@ -24,12 +24,17 @@ const CustomerDetailPage = () => {
     loadCustomer();
   }, [id]);
 
+  useEffect(() => {
+    if (customer) {
+      loadMatchingCars();
+    }
+  }, [customer, id]);
+
   const loadCustomer = async () => {
     setLoading(true);
     try {
       const response = await customerService.getCustomerById(id);
       setCustomer(response.data);
-      loadMatchingCars();
     } catch (err) {
       setError('Ошибка при загрузке информации о покупателе');
       console.error(err);
@@ -44,16 +49,18 @@ const CustomerDetailPage = () => {
       const response = await carService.getAllCars();
       const allCars = response.data;
       
+      const customerData = customer;
+      
       const filteredCars = allCars.filter(car => {
-        if (car.price > customer.maxPrice) return false;
-        if (customer.preferredBrand && customer.preferredBrand !== '' && 
-            car.brand?.name !== customer.preferredBrand) return false;
-        if (customer.preferredModel && customer.preferredModel !== '' && 
-            car.model?.name !== customer.preferredModel) return false;
-        if (customer.condition && customer.condition !== '' && 
-            car.condition !== customer.condition) return false;
-        if (customer.yearFrom > 0 && car.year < customer.yearFrom) return false;
-        if (customer.yearTo > 0 && car.year > customer.yearTo) return false;
+        if (car.price > customerData.maxPrice) return false;
+        if (customerData.preferredBrand && customerData.preferredBrand !== '' && 
+            car.brand?.name !== customerData.preferredBrand) return false;
+        if (customerData.preferredModel && customerData.preferredModel !== '' && 
+            car.model?.name !== customerData.preferredModel) return false;
+        if (customerData.condition && customerData.condition !== '' && 
+            car.condition !== customerData.condition) return false;
+        if (customerData.yearFrom > 0 && car.year < customerData.yearFrom) return false;
+        if (customerData.yearTo > 0 && car.year > customerData.yearTo) return false;
         return true;
       });
       setMatchingCars(filteredCars);
@@ -74,7 +81,10 @@ const CustomerDetailPage = () => {
   };
 
   const getCarImage = (car) => {
-    return 'https://via.placeholder.com/300x150?text=' + (car.brand?.name || '') + '+' + (car.model?.name || '');
+    if (car.imagePath) {
+      return `http://localhost:8080/${car.imagePath}`;
+    }
+    return '/car-placeholder.png';
   };
 
   if (loading) {
@@ -128,7 +138,9 @@ const CustomerDetailPage = () => {
               </Avatar>
               <Box>
                 <Typography variant="h5">{customer.fullName}</Typography>
-                <Typography variant="body1" color="text.secondary">{customer.contacts}</Typography>
+                <Typography variant="body1" color="text.secondary">
+                  {customer.phone || customer.email || 'Нет контактов'}
+                </Typography>
               </Box>
             </Box>
             
@@ -217,7 +229,7 @@ const CustomerDetailPage = () => {
                         </Typography>
                         
                         <Box sx={{ mt: 1 }}>
-                          {car.condition === 'новая' ? (
+                          {car.condition === 'new' ? (
                             <Chip label="Новый" color="success" size="small" />
                           ) : (
                             <Chip label={`Пробег: ${car.mileage} км`} color="primary" size="small" />

@@ -24,9 +24,45 @@ const SalesHistoryPage = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
-    endDate: new Date().toISOString().split('T')[0],
+    endDate: '',
     shopId: '',
   });
+
+  const applyFilters = React.useCallback((currentSales, currentFilters) => {
+    let filtered = [...currentSales];
+
+    if (currentFilters.startDate) {
+      const startDate = new Date(currentFilters.startDate);
+      filtered = filtered.filter(sale => 
+        new Date(sale.saleDate) >= startDate
+      );
+    }
+
+    if (currentFilters.endDate) {
+      const endDate = new Date(currentFilters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(sale => 
+        new Date(sale.saleDate) <= endDate
+      );
+    }
+
+    if (currentFilters.brandId) {
+      filtered = filtered.filter(sale => 
+        sale.car?.brandId === parseInt(currentFilters.brandId));
+    }
+
+    if (currentFilters.modelId) {
+      filtered = filtered.filter(sale => 
+        sale.car?.modelId === parseInt(currentFilters.modelId));
+    }
+
+    if (currentFilters.shopId) {
+      filtered = filtered.filter(sale => 
+        sale.shopId === parseInt(currentFilters.shopId));
+    }
+
+    return filtered;
+  }, []);
 
   useEffect(() => {
     loadSales();
@@ -34,15 +70,15 @@ const SalesHistoryPage = () => {
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [sales, filters]);
+    const filtered = applyFilters(sales, filters);
+    setFilteredSales(filtered);
+  }, [sales, filters, applyFilters]);
 
   const loadSales = async () => {
     setLoading(true);
     try {
       const response = await saleService.getAllSales();
       setSales(response.data);
-      setFilteredSales(response.data);
     } catch (err) {
       setError('Ошибка при загрузке истории продаж');
       console.error(err);
@@ -60,55 +96,18 @@ const SalesHistoryPage = () => {
     }
   };
 
-  // фильтры
-  const applyFilters = () => {
-    let filtered = [...sales];
-
-    if (filters.startDate) {
-      const startDate = new Date(filters.startDate);
-      filtered = filtered.filter(sale => 
-        new Date(sale.saleDate) >= startDate
-      );
-    }
-
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      endDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(sale => 
-        new Date(sale.saleDate) <= endDate
-      );
-    }
-
-    if (filters.brandId) {
-      filtered = filtered.filter(sale => 
-        sale.car?.brandId === parseInt(filters.brandId));
-    }
-
-    if (filters.modelId) {
-      filtered = filtered.filter(sale => 
-        sale.car?.modelId === parseInt(filters.modelId));
-    }
-
-    if (filters.shopId) {
-      filtered = filtered.filter(sale => 
-        sale.shopId === parseInt(filters.shopId));
-    }
-
-    setFilteredSales(filtered);
-  };
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters({
-      ...filters,
+    setFilters(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   const resetFilters = () => {
     setFilters({
       startDate: '',
-      endDate: new Date().toISOString().split('T')[0],
+      endDate: '',
       shopId: '',
     });
   };
@@ -371,7 +370,7 @@ const SalesHistoryPage = () => {
                         Марка и модель
                       </Typography>
                       <Typography variant="body1">
-                        {selectedSale.car?.brand?.name} {selectedSale.car?.model?.name}
+                        {selectedSale.car?.brand?.name || ''} {selectedSale.car?.model?.name || ''}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -379,7 +378,7 @@ const SalesHistoryPage = () => {
                         Год выпуска
                       </Typography>
                       <Typography variant="body1">
-                        {selectedSale.car?.year}
+                        {selectedSale.car?.year || 'Не указан'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -388,14 +387,6 @@ const SalesHistoryPage = () => {
                       </Typography>
                       <Typography variant="body1">
                         {selectedSale.car?.condition === 'new' ? 'Новый' : 'С пробегом'}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        VIN
-                      </Typography>
-                      <Typography variant="body1">
-                        {selectedSale.car?.vin || 'Не указан'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12}>

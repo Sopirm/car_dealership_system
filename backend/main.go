@@ -677,7 +677,7 @@ func main() {
 	// список всех автомобилей
 	r.GET("/api/cars", func(c *gin.Context) {
 		var cars []Car
-		db.Preload("Shop").Preload("Brand").Preload("Model").Find(&cars)
+		db.Preload("Shop").Preload("Brand").Preload("Model").Where("in_stock = ?", true).Find(&cars)
 		c.JSON(http.StatusOK, cars)
 	})
 
@@ -725,6 +725,18 @@ func main() {
 		c.JSON(http.StatusOK, customers)
 	})
 
+	// получение покупателя по ID
+	r.GET("/api/customers/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var customer Customer
+		result := db.First(&customer, id)
+		if result.Error != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Покупатель не найден"})
+			return
+		}
+		c.JSON(http.StatusOK, customer)
+	})
+
 	// список всех сотрудников
 	r.GET("/api/employees", func(c *gin.Context) {
 		var employees []Employee
@@ -735,7 +747,7 @@ func main() {
 	// список всех продаж
 	r.GET("/api/sales", func(c *gin.Context) {
 		var sales []Sale
-		db.Preload("Car").Preload("Customer").Preload("Shop").Preload("Employee").Find(&sales)
+		db.Preload("Car.Brand").Preload("Car.Model").Preload("Customer").Preload("Shop").Preload("Employee").Order("sale_date DESC").Find(&sales)
 		c.JSON(http.StatusOK, sales)
 	})
 
@@ -750,7 +762,7 @@ func main() {
 	r.GET("/api/cars/low-mileage", func(c *gin.Context) {
 		var cars []Car
 		db.Preload("Shop").Preload("Brand").Preload("Model").
-			Where("condition = 'used' AND mileage < 30000").Find(&cars)
+			Where("condition = 'used' AND mileage < 30000 AND in_stock = ?", true).Find(&cars)
 		c.JSON(http.StatusOK, cars)
 	})
 
@@ -758,7 +770,7 @@ func main() {
 	r.GET("/api/cars/new", func(c *gin.Context) {
 		var cars []Car
 		db.Preload("Shop").Preload("Brand").Preload("Model").
-			Where("condition = 'new'").Find(&cars)
+			Where("condition = 'new' AND in_stock = ?", true).Find(&cars)
 		c.JSON(http.StatusOK, cars)
 	})
 
@@ -782,18 +794,23 @@ func main() {
 
 		var matchingCustomers []Customer
 		query := db.Where("max_price >= ?", car.Price)
+
 		if car.Brand.Name != "" {
 			query = query.Where("preferred_brand = ? OR preferred_brand = ''", car.Brand.Name)
 		}
+
 		if car.Model.Name != "" {
 			query = query.Where("preferred_model = ? OR preferred_model = ''", car.Model.Name)
 		}
+
 		if car.Year > 0 {
 			query = query.Where("(year_from <= ? OR year_from = 0) AND (year_to >= ? OR year_to = 0)", car.Year, car.Year)
 		}
+
 		if car.Condition != "" {
-			query = query.Where("condition = ? OR condition = 'any'", car.Condition)
+			query = query.Where("condition = ? OR condition = '' OR condition = 'any'", car.Condition)
 		}
+
 		query.Find(&matchingCustomers)
 		c.JSON(http.StatusOK, matchingCustomers)
 	})

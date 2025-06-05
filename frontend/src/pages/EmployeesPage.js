@@ -120,7 +120,8 @@ const EmployeesPage = () => {
       const empData = {
         ...employeeData,
         shopId: parseInt(employeeData.shopId),
-        salary: parseInt(employeeData.salary)
+        salary: parseInt(employeeData.salary),
+        hireDate: new Date(employeeData.hireDate).toISOString()
       };
 
       if (editMode) {

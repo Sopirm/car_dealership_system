@@ -13,6 +13,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
 import { carService, customerService, saleService, employeeService, authService, favoriteService } from '../services/api';
 
 const getTransmissionLabel = (transmission) => {
@@ -206,7 +209,7 @@ const CarDetailPage = () => {
       await saleService.createSale(saleToSubmit);
       alert('Продажа успешно оформлена');
       setSaleDialogOpen(false);
-      navigate('/cars');
+      navigate('/sales');
     } catch (err) {
       console.error('Ошибка при оформлении продажи', err);
       alert(`Ошибка при оформлении продажи: ${err.message}`);
@@ -217,7 +220,7 @@ const CarDetailPage = () => {
     if (car.imagePath) {
       return `http://localhost:8080/${car.imagePath}`;
     }
-    return 'https://via.placeholder.com/600x300?text=' + (car.brand?.name || '') + '+' + (car.model?.name || '');
+    return '/car-placeholder.png';
   };
 
   if (loading) {
@@ -364,44 +367,6 @@ const CarDetailPage = () => {
 
       <Grid container spacing={4}>
         <Grid item xs={12} md={7}>
-          <img
-            src={getCarImage(car)}
-            alt={`${car.brand?.name || ''} ${car.model?.name || ''}`}
-            style={{ 
-              width: '100%', 
-              borderRadius: '8px',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-            }}
-          />
-          
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {car.brand?.name || ''} {car.model?.name || ''}
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              {car.year} г., {getTransmissionLabel(car.transmission)}, {car.enginePower} л.с.
-            </Typography>
-            
-            <Box sx={{ mt: 1, mb: 2, display: 'flex', gap: 1 }}>
-              {car.condition === 'new' ? (
-                <Chip label={getConditionLabel(car.condition)} color="success" />
-              ) : (
-                <Chip label={`Пробег: ${car.mileage} км`} color="primary" />
-              )}
-              <Chip 
-                label={car.inStock ? 'В наличии' : 'На комиссии'} 
-                variant="outlined" 
-                color={car.inStock ? 'success' : 'default'} 
-              />
-            </Box>
-            
-            <Typography variant="h5" sx={{ mt: 3, color: 'primary.main' }}>
-              {car.price?.toLocaleString()} ₽
-            </Typography>
-          </Box>
-        </Grid>
-        
-        <Grid item xs={12} md={5}>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Характеристики
@@ -443,11 +408,6 @@ const CarDetailPage = () => {
                 </Grid>
               )}
               
-              <Grid item xs={12} sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">Автосалон</Typography>
-                <Typography variant="body1">{car.shop?.name || 'Не указан'}</Typography>
-              </Grid>
-              
               {car.features && (
                 <Grid item xs={12} sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">Особенности</Typography>
@@ -457,6 +417,58 @@ const CarDetailPage = () => {
             </Grid>
           </Paper>
           
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Информация об автосалоне
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    {car.shop?.name || 'Не указан'}
+                  </Typography>
+                </Box>
+              </Grid>
+              
+              {car.shop?.address && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <LocationOnIcon color="action" fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      {car.shop.address}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+              
+              {car.shop?.phone && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PhoneIcon color="action" fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      {car.shop.phone}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+              
+              {car.shop?.email && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <EmailIcon color="action" fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2">
+                      {car.shop.email}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} md={5}>
           {authService.isAuthenticated() && authService.isAdmin() && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -482,7 +494,7 @@ const CarDetailPage = () => {
                               {customer.fullName}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {customer.contacts}
+                              {customer.phone || customer.email || 'Нет контактов'}
                             </Typography>
                           </Box>
                         </Box>

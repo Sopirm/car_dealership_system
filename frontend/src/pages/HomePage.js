@@ -208,7 +208,7 @@ const HomePage = () => {
                       <CardMedia
                         component="img"
                         sx={{ width: 120, height: 80, objectFit: 'cover' }}
-                        image={`https://via.placeholder.com/120x80?text=${expensiveCar.brand?.name || ''}_${expensiveCar.model?.name || ''}`}
+                        image={expensiveCar.imagePath ? `http://localhost:8080/${expensiveCar.imagePath}` : '/car-placeholder.png'}
                         alt={`${expensiveCar.brand?.name || ''} ${expensiveCar.model?.name || ''}`}
                       />
                       <Box sx={{ ml: 2 }}>
